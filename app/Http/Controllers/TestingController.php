@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Http\Request;
 class TestingController extends Controller
 {
     /**
@@ -10,9 +10,9 @@ class TestingController extends Controller
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(Request $request)
     {
-        //
+        $this->request=$request;
     }
 
     public function main() {
@@ -20,19 +20,83 @@ class TestingController extends Controller
       $user = \DB::table("tx_hdr_user")->get();
       return $user;
     }
-	public function filter_user($id)
+	public function filter_user($filter,$id)
 	{
-		$user=(array) \DB::table("tx_hdr_user")->where("user_id",$id)->first();
+		$user=(array) \DB::table("tx_hdr_user")->where($filter,$id)->first();
 		return $user;
-	}
+	}	
 	public function create_user()
 	{
 		$input=$this->request->all();
+		
+		
+		$cek=$this->filter_user("user_name",$input["username"]);
+		if($cek)
+		{
+			return "Username sudah ada";
+		}
+		else
+		{
+			$data=[
+			"user_name" => $input["username"],
+			"user_password" => $input["password"]
+			];
+			$insert=\DB::table("tx_hdr_user")->insert($data);
+			$userid=$this->filter_user("user_name",$input["username"])["user_id"];
+			$data_dtl=[
+			"dtl_hdr_id"		=> $userid,
+			"dtl_user_email"	=> $input["email"],
+			"dtl_user_address"	=> $input["address"],
+			"dtl_user_phone"	=> $input["phone"]
+			];
+			
+			$insert=\DB::table("tx_dtl_user")->insert($data_dtl);
+			if($insert)
+			{
+				return "Insert Success";
+			}
+			else
+			{
+				return "Insert Failure";
+			}
+		}
+		
+		
+		
+	}
+
+	public function create_billing()
+	{
+		$input=$this->request->all();
+		
 		$data=[
-		"user_name" => $input["user_name"],
-		"user_password"	=> base64_encode($input["user_password"])
+		"billing_name" 	=> $input["name"],
+		"billing_email" => $input["email"],
+		"billing_phone" => $input["phone"],
+		"billing_information" => $input["information"],
+		"billing_address" => $input["address"]
 		];
-		$user=\DB::table("tx_hdr_user")->where("user_name",$input["user_name"])->count();	
+		$insert=\DB::table("tx_hdr_billing")->insert($data);
+		$billing_id = DB::table('tx_hdr_billing')->max('billing_id');
+		foreach ($input["dtl"] as $dtl) {
+			$data_dtl=[
+			"dtl_hdr_id"		=> $billing_id,
+			"dtl_product"		=> $dtl["product"],
+			"dtl_qty"			=> $dtl["qty"],
+			"dtl_price"			=> $dtl["price"]
+			];
+			
+			$insert=\DB::table("tx_dtl_billing")->insert($data_dtl);
+		}
+		
+		if($insert)
+		{
+			return "Insert Success";
+		}
+		else
+		{
+			return "Insert Failure";
+		}
 	}
     //
 }

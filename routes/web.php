@@ -18,7 +18,11 @@ $router->get('/', function () use ($router) {
 });
 
 $router->get("/user","TestingController@main");
-$router->get("/user/{id}","TestingController@filter_user");
+$router->get("/user/{filter}/{id}","TestingController@filter_user");
 $router->post("/user","TestingController@create_user");
 $router->put("/user/{id}","TestingController@update_user");
 $router->delete("/user/{id}","TestingController@delete_user");
+
+$router->post("/billing","TestingController@create_billing");
+$router->post("/list","IndexController@main");
+
